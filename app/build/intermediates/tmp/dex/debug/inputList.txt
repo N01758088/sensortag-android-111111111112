@@ -1,0 +1,2 @@
+G:\AndroidStudioProjects\sensortag-android-111111111112\app\build\intermediates\classes\debug
+G:\AndroidStudioProjects\sensortag-android-111111111112\app\build\intermediates\pre-dexed\debug\support-v4-19.1.0-7d329024e621ac57d33baa3436fb41d0b0e85570.jar
