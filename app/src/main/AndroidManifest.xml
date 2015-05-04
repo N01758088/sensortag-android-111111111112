@@ -58,9 +58,13 @@
             android:parentActivityName="DeviceActivity"
             android:screenOrientation="portrait"
             android:label="Preferences"/>
+        <provider
+            android:authorities="com.example.ti.ble.sensortag"
+            android:name=".data.SensorProvider" />
 
         <service
-            android:name=".service.SensorService"/>
+            android:name="com.example.ti.ble.sensortag.SensorDBService"
+            android:exported="false"/>
 
         <receiver
             android:name=".service.SensorService$AlarmReceiver"/>

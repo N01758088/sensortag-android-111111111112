@@ -14,7 +14,7 @@
   this software subject to the terms herein.  With respect to the foregoing patent
   license, such license is granted  solely to the extent that any such patent is necessary
   to Utilize the software alone.  The patent license shall not apply to any combinations which
-  include this software, other than combinations with devices manufactured by or for TI (ÒTI DevicesÓ). 
+  include this software, other than combinations with devices manufactured by or for TI (ï¿½TI Devicesï¿½). 
   No hardware patent is licensed hereunder.
 
   Redistributions must preserve existing copyright notices and reproduce this license (including the
@@ -42,9 +42,9 @@
 
   DISCLAIMER.
 
-  THIS SOFTWARE IS PROVIDED BY TI AND TIÕS LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+  THIS SOFTWARE IS PROVIDED BY TI AND TIï¿½S LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
   BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-  IN NO EVENT SHALL TI AND TIÕS LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  IN NO EVENT SHALL TI AND TIï¿½S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
   OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
@@ -54,24 +54,45 @@
  **************************************************************************************************/
 package com.example.ti.ble.sensortag;
 
-import java.text.DecimalFormat;
-
+import android.app.AlertDialog;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.example.ti.ble.sensortag.data.SensortagDbHelper;
+
 import com.example.ti.util.Point3D;
+
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 // Fragment for Device View
 public class DeviceView extends Fragment {
 
+    private final String LOG_TAG = DeviceView.class.getSimpleName();
+
+    private ArrayAdapter<String> mSensorAdapter;
+
+    List<String> sensorReadings = new ArrayList<String>();
+
+  // SensortagDbHelper myDb = new SensortagDbHelper(mActivity.getBaseContext());
+
+    public DeviceView(){
+
+    }
 	// Sensor table; the iD corresponds to row number
 	private static final int ID_OFFSET = 0;
 	private static final int ID_KEY = 0;
@@ -88,15 +109,16 @@ public class DeviceView extends Fragment {
 
 	// GUI
 	private TableLayout table;
-	private TextView mAccValue;
+	public static TextView mAccValue;
 	private TextView mMagValue;
 	private TextView mLuxValue;
 	private TextView mGyrValue;
 	private TextView mObjValue;
-	private TextView mAmbValue;
-	private TextView mHumValue;
-	private TextView mBarValue;
-	private ImageView mButton;
+	public static TextView mAmbValue;
+	public static TextView mHumValue;
+	public static TextView mBarValue;
+	public static ImageView mButton;
+    //public String tstmp;
 	private ImageView mRelay;
 	private TableRow mMagPanel;
 	private TableRow mBarPanel;
@@ -108,12 +130,25 @@ public class DeviceView extends Fragment {
 	private boolean mIsSensorTag2;
 	private boolean mBusy;
 
+    //sensor values to be inserted from deviceview file
+
+    String devid = "123456789";
+    String temp = "25";
+    String hum = "25";
+    String bar = "25";
+    String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+   // String tstmp = "25";
+
+
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 	    Bundle savedInstanceState) {
 		mInstance = this;
 		mActivity = (DeviceActivity) getActivity();
 		mIsSensorTag2 = mActivity.isSensorTag2();
+        SensortagDbHelper myDb = new SensortagDbHelper(mActivity.getBaseContext());
+
 
 		// The last two arguments ensure LayoutParams are inflated properly.
 		View view;
@@ -140,6 +175,7 @@ public class DeviceView extends Fragment {
 		mHumValue = (TextView) view.findViewById(R.id.humidityTxt);
 		mBarValue = (TextView) view.findViewById(R.id.barometerTxt);
 		mButton = (ImageView) view.findViewById(R.id.buttons);
+         String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
 
 		// Support for calibration
 		mBarPanel = (TableRow) view.findViewById(R.id.barPanel);
@@ -181,102 +217,179 @@ public class DeviceView extends Fragment {
 	/**
 	 * Handle changes in sensor values
 	 * */
-	public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
-		Point3D v;
-		String msg;
 
-		if (uuidStr.equals(SensorTagGatt.UUID_ACC_DATA.toString())) {
-			v = Sensor.ACCELEROMETER.convert(rawValue);
-			msg = decimal.format(v.x) + "\n" + decimal.format(v.y) + "\n"
-			    + decimal.format(v.z) + "\n";
-			mAccValue.setText(msg);
-		}
+ 	public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
 
-		if (uuidStr.equals(SensorTagGatt.UUID_MAG_DATA.toString())) {
-			v = Sensor.MAGNETOMETER.convert(rawValue);
-			msg = decimal.format(v.x) + "\n" + decimal.format(v.y) + "\n"
-			    + decimal.format(v.z) + "\n";
-			mMagValue.setText(msg);
-		}
+        Point3D v;
+        String msg = " ";
+        String dmsg = "";
+        String hmsg = " ";
+        String bmsg = " ";
+        String tmsg = "";
 
-		if (uuidStr.equals(SensorTagGatt.UUID_OPT_DATA.toString())) {
-			v = Sensor.LUXOMETER.convert(rawValue);
-			msg = decimal.format(v.x) + "\n";
-			mLuxValue.setText(msg);
-		}
 
-		if (uuidStr.equals(SensorTagGatt.UUID_GYR_DATA.toString())) {
-			v = Sensor.GYROSCOPE.convert(rawValue);
-			msg = decimal.format(v.x) + "\n" + decimal.format(v.y) + "\n"
-			    + decimal.format(v.z) + "\n";
-			mGyrValue.setText(msg);
-		}
+        //String tstmp = "";
+        // String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
 
-		if (uuidStr.equals(SensorTagGatt.UUID_IRT_DATA.toString())) {
-			v = Sensor.IR_TEMPERATURE.convert(rawValue);
-			msg = decimal.format(v.x) + "\n";
-			mAmbValue.setText(msg);
-			msg = decimal.format(v.y) + "\n";
-			mObjValue.setText(msg);
-		}
 
-		if (uuidStr.equals(SensorTagGatt.UUID_HUM_DATA.toString())) {
-			v = Sensor.HUMIDITY.convert(rawValue);
-			msg = decimal.format(v.x) + "\n";
-			mHumValue.setText(msg);
-		}
+        if (uuidStr.equals(SensorTagGatt.UUID_ACC_DATA.toString())) {
+            v = Sensor.ACCELEROMETER.convert(rawValue);
+            msg = decimal.format(v.x) + "\n" + decimal.format(v.y) + "\n"
+                    + decimal.format(v.z) + "\n";
+            mAccValue.setText(msg);
+        }
 
-		if (uuidStr.equals(SensorTagGatt.UUID_BAR_DATA.toString())) {
-			v = Sensor.BAROMETER.convert(rawValue);
-			
-			double h = (v.x - BarometerCalibrationCoefficients.INSTANCE.heightCalibration)
-			    / PA_PER_METER;
-			h = (double) Math.round(-h * 10.0) / 10.0;
-			msg = decimal.format(v.x / 100.0f) + "\n" + h;
-			mBarValue.setText(msg);
-		}
+        if (uuidStr.equals(SensorTagGatt.UUID_MAG_DATA.toString())) {
+            v = Sensor.MAGNETOMETER.convert(rawValue);
+            msg = decimal.format(v.x) + "\n" + decimal.format(v.y) + "\n"
+                    + decimal.format(v.z) + "\n";
+            mMagValue.setText(msg);
+        }
 
-		if (uuidStr.equals(SensorTagGatt.UUID_KEY_DATA.toString())) {
-			int keys = rawValue[0];
-			SimpleKeysStatus s;
-			final int imgBtn;
-			s = Sensor.SIMPLE_KEYS.convertKeys((byte) (keys&3));
+        if (uuidStr.equals(SensorTagGatt.UUID_OPT_DATA.toString())) {
+            v = Sensor.LUXOMETER.convert(rawValue);
+            msg = decimal.format(v.x) + "\n";
+            mLuxValue.setText(msg);
+        }
+        if (uuidStr.equals(SensorTagGatt.UUID_GYR_DATA.toString())) {
+            v = Sensor.GYROSCOPE.convert(rawValue);
+            msg = decimal.format(v.x) + "\n" + decimal.format(v.y) + "\n"
+                    + decimal.format(v.z) + "\n";
+            mGyrValue.setText(msg);
+        }
 
-			switch (s) {
-			case OFF_ON:
-				imgBtn = R.drawable.buttonsoffon;
-				setBusy(true);
-				break;
-			case ON_OFF:
-				imgBtn = R.drawable.buttonsonoff;
-				setBusy(true);
-				break;
-			case ON_ON:
-				imgBtn = R.drawable.buttonsonon;
-				break;
-			default:
-				imgBtn = R.drawable.buttonsoffoff;
-				setBusy(false);
-				break;
-			}
+        if (uuidStr.equals(SensorTagGatt.UUID_IRT_DATA.toString())) {
+            v = Sensor.IR_TEMPERATURE.convert(rawValue);
+            tmsg = decimal.format(v.x) + "\n";
+            mAmbValue.setText(tmsg);
+            msg = decimal.format(v.y) + "\n";
+            mObjValue.setText(msg);
+        }
 
-			mButton.setImageResource(imgBtn);
+        if (uuidStr.equals(SensorTagGatt.UUID_HUM_DATA.toString())) {
+            v = Sensor.HUMIDITY.convert(rawValue);
+            hmsg = decimal.format(v.x) + "\n";
+            mHumValue.setText(hmsg);
+        }
 
-			if (mIsSensorTag2) {
-				// Only applicable for SensorTag2
-				final int imgRelay;
+        if (uuidStr.equals(SensorTagGatt.UUID_BAR_DATA.toString())) {
+            v = Sensor.BAROMETER.convert(rawValue);
 
-				if ((keys&4) == 4) {
-					imgRelay = R.drawable.reed_open;
-				} else {
-					imgRelay = R.drawable.reed_closed;
-				}
-				mRelay.setImageResource(imgRelay);
-			}
-		}
-	}
+            double h = (v.x - BarometerCalibrationCoefficients.INSTANCE.heightCalibration)
+                    / PA_PER_METER;
+            h = (double) Math.round(-h * 10.0) / 10.0;
+            bmsg = decimal.format(v.x / 100.0f) + "\n" + h;
+            mBarValue.setText(bmsg);
+        }
 
-	void updateVisibility() {
+        if (uuidStr.equals(SensorTagGatt.UUID_KEY_DATA.toString())) {
+            int keys = rawValue[0];
+            SimpleKeysStatus s;
+            final int imgBtn;
+            s = Sensor.SIMPLE_KEYS.convertKeys((byte) (keys & 3));
+
+            switch (s) {
+                case OFF_ON:
+                    imgBtn = R.drawable.buttonsoffon;
+                    setBusy(true);
+                    break;
+                case ON_OFF:
+                    imgBtn = R.drawable.buttonsonoff;
+                    setBusy(true);
+                    break;
+                case ON_ON:
+                    imgBtn = R.drawable.buttonsonon;
+                    break;
+                default:
+                    imgBtn = R.drawable.buttonsoffoff;
+                    setBusy(false);
+                    break;
+            }
+
+            mButton.setImageResource(imgBtn);
+
+            if (mIsSensorTag2) {
+                // Only applicable for SensorTag2
+                final int imgRelay;
+
+                if ((keys & 4) == 4) {
+                    imgRelay = R.drawable.reed_open;
+                } else {
+                    imgRelay = R.drawable.reed_closed;
+                }
+                mRelay.setImageResource(imgRelay);
+            }
+
+        }
+        addData(dmsg, tmsg, hmsg, bmsg);
+
+         }
+
+    String insval = "Inserted";
+    String failval = "Failed to Insert";
+
+
+  public void addData(String devid, String temp,String hum,String bar) {
+
+         String value = "tamil";
+      tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+      // Loop through elements.
+      for (int i = 0; i < sensorReadings.size(); i++) {
+          value = value + sensorReadings.get(i);
+          System.out.println(" Element: " + value + " Timestamp: " + tstmp);
+
+      }
+      Log.e(LOG_TAG, value);
+
+      SensortagDbHelper myDb = new SensortagDbHelper(mActivity.getBaseContext());
+        boolean isInserted = myDb.insertData(devid, temp, hum, bar, tstmp);
+        if (isInserted) {
+            System.out.println("Status of DB insert: " + insval);
+            Log.e(LOG_TAG, insval);
+        } else {
+            System.out.println("Status of DB insert: " + failval);
+            Log.e(LOG_TAG, failval);
+        }
+      try {
+          Thread.sleep(5000);                 //1000 milliseconds is 1 second.
+      } catch(InterruptedException ex) {
+          Thread.currentThread().interrupt();
+      }
+    }
+
+    public void viewAll(){
+        SensortagDbHelper myDb = new SensortagDbHelper(mActivity.getBaseContext());
+        Cursor res = myDb.getAllData();
+        if (res.getCount() ==0){
+            // show message
+            showMessage("Error", "No Data Found");
+            return;
+        }
+        StringBuffer buffer = new StringBuffer();
+        while (res.moveToNext()){
+            buffer.append("ID:"+ res.getString(0) +"\n");
+            buffer.append("DEVID:"+ res.getString(1) +"\n");
+            buffer.append("TEMP:"+ res.getString(2) +"\n");
+            buffer.append("HUM:"+ res.getString(3) +"\n");
+            buffer.append("BAR:"+ res.getString(4) +"\n");
+            buffer.append("TIME:"+ res.getString(5) +"\n");
+
+        }
+        //show all data
+        showMessage("Data", buffer.toString());
+    }
+
+    public void showMessage(String title, String message){
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity.getBaseContext());
+        builder.setCancelable(true);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.show();
+
+    }
+
+
+    void updateVisibility() {
 		showItem(ID_KEY, mActivity.isEnabledByPrefs(Sensor.SIMPLE_KEYS));
 		showItem(ID_ACC, mActivity.isEnabledByPrefs(Sensor.ACCELEROMETER));
 		if (mIsSensorTag2)
@@ -306,4 +419,5 @@ public class DeviceView extends Fragment {
 			mBusy = f;
 		}
 	}
+
 }

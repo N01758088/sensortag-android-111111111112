@@ -7,8 +7,9 @@ import android.provider.BaseColumns;
 import android.text.format.Time;
 
 /**
- * Created by sethu_000 on 4/21/2015.
+ * Created by sethu_000 on 5/4/2015.
  */
+
 
 /**
  * Defines table and column names for the Sensor database.
@@ -45,9 +46,8 @@ public class SensorContract {
 
 
     /*
-           Inner class that defines the contents of the location table
-           Students: This is where you will add the strings.  (Similar to what has been
-           done for WeatherEntry)
+           Inner class that defines the contents of the Sensor table
+
         */
     public static final class SensorEntry implements BaseColumns {
 

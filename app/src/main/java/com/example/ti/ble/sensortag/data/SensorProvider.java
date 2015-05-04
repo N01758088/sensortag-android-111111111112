@@ -9,12 +9,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
-import com.example.ti.ble.sensortag.data.SensorContract.SensorEntry;
-
 /**
- * Created by sethu_000 on 4/21/2015.
+ * Created by sethu_000 on 5/4/2015.
  */
-
 
 public class SensorProvider extends ContentProvider {
 
@@ -32,34 +29,34 @@ public class SensorProvider extends ContentProvider {
         //This is an inner join which looks like
         //weather INNER JOIN location ON weather.location_id = location._id
         sensorQueryBuilder.setTables(
-                SensorEntry.TABLE_NAME);
+                SensorContract.SensorEntry.TABLE_NAME);
     }
 
-        static UriMatcher buildUriMatcher() {
-            // 1) The code passed into the constructor represents the code to return for the root
-            // URI.  It's common to use NO_MATCH as the code for this case. Add the constructor below.
+    static UriMatcher buildUriMatcher() {
+        // 1) The code passed into the constructor represents the code to return for the root
+        // URI.  It's common to use NO_MATCH as the code for this case. Add the constructor below.
 
-            // I know what you're thinking.  Why create a UriMatcher when you can use regular
-            // expressions instead?  Because you're not crazy, that's why.
+        // I know what you're thinking.  Why create a UriMatcher when you can use regular
+        // expressions instead?  Because you're not crazy, that's why.
 
-            // All paths added to the UriMatcher have a corresponding code to return when a match is
-            // found.  The code passed into the constructor represents the code to return for the root
-            // URI.  It's common to use NO_MATCH as the code for this case.
-            final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
-            final String authority = SensorContract.CONTENT_AUTHORITY;
+        // All paths added to the UriMatcher have a corresponding code to return when a match is
+        // found.  The code passed into the constructor represents the code to return for the root
+        // URI.  It's common to use NO_MATCH as the code for this case.
+        final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+        final String authority = SensorContract.CONTENT_AUTHORITY;
 
 
-            // 2) Use the addURI function to match each of the types.  Use the constants from
-            // WeatherContract to help define the types to the UriMatcher.
+        // 2) Use the addURI function to match each of the types.  Use the constants from
+        // WeatherContract to help define the types to the UriMatcher.
 
-            // For each type of URI you want to add, create a corresponding code.
-            matcher.addURI(authority, SensorContract.PATH_SENSOR, SENSOR);
-            //matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
-            //matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
+        // For each type of URI you want to add, create a corresponding code.
+        matcher.addURI(authority, SensorContract.PATH_SENSOR, SENSOR);
+        //matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
+        //matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
 
-            // 3) Return the new matcher!
-            return matcher;
-        }
+        // 3) Return the new matcher!
+        return matcher;
+    }
 
     @Override
     public boolean onCreate() {
@@ -76,7 +73,7 @@ public class SensorProvider extends ContentProvider {
         switch (match) {
             // Student: Uncomment and fill out these two cases
             case SENSOR:
-                return SensorEntry.CONTENT_ITEM_TYPE;
+                return SensorContract.SensorEntry.CONTENT_ITEM_TYPE;
 
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -95,7 +92,7 @@ public class SensorProvider extends ContentProvider {
             // "Sensor"
             case SENSOR: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
-                        SensorEntry.TABLE_NAME,
+                        SensorContract.SensorEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -121,9 +118,9 @@ public class SensorProvider extends ContentProvider {
         switch (match) {
             case SENSOR: {
                 //normalizeDate(values);
-                long _id = db.insert(SensorEntry.TABLE_NAME, null, values);
+                long _id = db.insert(SensorContract.SensorEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
-                    returnUri = SensorEntry.buildSensorUri(_id);
+                    returnUri = SensorContract.SensorEntry.buildSensorUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
@@ -132,6 +129,7 @@ public class SensorProvider extends ContentProvider {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
         getContext().getContentResolver().notifyChange(uri, null);
+        db.close();
         return returnUri;
     }
 
@@ -156,7 +154,7 @@ public class SensorProvider extends ContentProvider {
         switch (match) {
             case SENSOR:
                 rowsDeleted = db.delete(
-                        SensorEntry.TABLE_NAME, selection, selectionArgs);
+                        SensorContract.SensorEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -170,9 +168,9 @@ public class SensorProvider extends ContentProvider {
 
     private void normalizeDate(ContentValues values) {
         // normalize the date value
-        if (values.containsKey(SensorEntry.COLUMN_TIMESTAMP)) {
-            long dateValue = values.getAsLong(SensorEntry.COLUMN_TIMESTAMP);
-            values.put(SensorEntry.COLUMN_TIMESTAMP, SensorContract.normalizeDate(dateValue));
+        if (values.containsKey(SensorContract.SensorEntry.COLUMN_TIMESTAMP)) {
+            long dateValue = values.getAsLong(SensorContract.SensorEntry.COLUMN_TIMESTAMP);
+            values.put(SensorContract.SensorEntry.COLUMN_TIMESTAMP, SensorContract.normalizeDate(dateValue));
         }
     }
 
@@ -188,8 +186,8 @@ public class SensorProvider extends ContentProvider {
 
         switch (match) {
             case SENSOR:
-               normalizeDate(values);
-                rowsUpdated = db.update(SensorEntry.TABLE_NAME, values, selection,
+                normalizeDate(values);
+                rowsUpdated = db.update(SensorContract.SensorEntry.TABLE_NAME, values, selection,
                         selectionArgs);
                 break;
             default:

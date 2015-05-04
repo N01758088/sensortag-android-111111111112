@@ -14,7 +14,7 @@
   this software subject to the terms herein.  With respect to the foregoing patent
   license, such license is granted  solely to the extent that any such patent is necessary
   to Utilize the software alone.  The patent license shall not apply to any combinations which
-  include this software, other than combinations with devices manufactured by or for TI (ÒTI DevicesÓ). 
+  include this software, other than combinations with devices manufactured by or for TI (ï¿½TI Devicesï¿½). 
   No hardware patent is licensed hereunder.
 
   Redistributions must preserve existing copyright notices and reproduce this license (including the
@@ -42,9 +42,9 @@
 
   DISCLAIMER.
 
-  THIS SOFTWARE IS PROVIDED BY TI AND TIÕS LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+  THIS SOFTWARE IS PROVIDED BY TI AND TIï¿½S LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
   BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-  IN NO EVENT SHALL TI AND TIÕS LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  IN NO EVENT SHALL TI AND TIï¿½S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
   OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
@@ -53,11 +53,6 @@
 
  **************************************************************************************************/
 package com.example.ti.ble.sensortag;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -78,7 +73,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-// import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -89,10 +83,23 @@ import android.widget.Toast;
 import com.example.ti.ble.common.BleDeviceInfo;
 import com.example.ti.ble.common.BluetoothLeService;
 import com.example.ti.ble.common.HelpView;
-import com.example.ti.ble.sensortag.R;
 import com.example.ti.util.CustomToast;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+
+// import android.util.Log;
+
 public class MainActivity extends ViewPagerActivity {
+
+
+    private final String LOG_TAG = MainActivity.class.getSimpleName();
+
 	// Log
 	// private static final String TAG = "MainActivity";
 
@@ -131,6 +138,24 @@ public class MainActivity extends ViewPagerActivity {
 	private boolean mInitialised = false;
 	SharedPreferences prefs = null;
 
+    //SQL DB
+    //SensortagDbHelper myDb;
+
+    //sensor values to be inserted from deviceview file
+
+ String devid = "";
+    String temp = "";
+    String hum = "";
+    String bar = "";
+   String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+
+ /* String devid = DeviceView.mAccValue.getText().toString();
+    String temp = DeviceView.mAmbValue.getText().toString();
+    String hum = DeviceView.mHumValue.getText().toString();
+    String bar = DeviceView.mBarValue.getText().toString();
+    String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()); */
+
+
 	public MainActivity() {
 		mThis = this;
 		mResourceFragmentPager = R.layout.fragment_pager;
@@ -142,8 +167,18 @@ public class MainActivity extends ViewPagerActivity {
 		// Start the application
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		super.onCreate(savedInstanceState);
+        //new FetchSensorTask().execute();
+       // myDb = new SensortagDbHelper(this);
+        /*devid = DeviceView.mAccValue.toString();
+        temp = DeviceView.mAmbValue.toString();
+        hum = DeviceView.mHumValue.toString();
+        bar = DeviceView.mBarValue.toString();
+        tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());*/
+      //  addData();
+     //   viewAll();
 
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+    		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		// Use this check to determine whether BLE is supported on the device. Then
 		// you can selectively disable BLE-related features.
@@ -165,7 +200,7 @@ public class MainActivity extends ViewPagerActivity {
 			mBleSupported = false;
 		}
 
-		// Initialize device list container and device filter
+    		// Initialize device list container and device filter
 		mDeviceInfoList = new ArrayList<BleDeviceInfo>();
 		Resources res = getResources();
 		mDeviceFilter = res.getStringArray(R.array.device_filter);
@@ -183,6 +218,70 @@ public class MainActivity extends ViewPagerActivity {
 		mFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
 		mFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
 	}
+
+  //  String insval = "Inserted";
+   // String failval = "Failed to Insert";
+
+  /*  public void addData(){
+
+        boolean isInserted =  myDb.insertData(devid, temp, hum, bar, tstmp);
+        if (isInserted) {
+            System.out.println("Status of DB insert: " + insval);
+            Log.e(LOG_TAG, insval);
+        } else {
+            System.out.println("Status of DB insert: " + failval);
+            Log.e(LOG_TAG, failval);
+        /*
+       boolean isInserted =  myDb.insertData(devid, temp, hum, bar, tstmp);
+        if (isInserted) {
+            System.out.println("Status of DB insert: " + insval);
+            Log.e(LOG_TAG, insval);
+        } else {
+            System.out.println("Status of DB insert: " + failval);
+            Log.e(LOG_TAG, failval);*/
+     //   }
+
+  //  }
+
+ /*   public void viewAll(){
+        Cursor res = myDb.getAllData();
+        if (res.getCount() ==0){
+            // show message
+            showMessage("Error", "No Data Found");
+            return;
+        }
+        StringBuffer buffer = new StringBuffer();
+        while (res.moveToNext()){
+            buffer.append("ID:"+ res.getString(0) +"\n");
+            buffer.append("DEVID:"+ res.getString(1) +"\n");
+            buffer.append("TEMP:"+ res.getString(2) +"\n");
+            buffer.append("HUM:"+ res.getString(3) +"\n");
+            buffer.append("BAR:"+ res.getString(4) +"\n");
+            buffer.append("TIME:"+ res.getString(5) +"\n");
+
+        }
+        //show all data
+        showMessage("Data", buffer.toString());
+    }
+
+    public void showMessage(String title, String message){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.show();
+
+    }*/
+
+  /*  public void startMethod(View v){
+        Intent i = new Intent(this, SensorDBService.class);
+        startService(i);
+
+    }
+    public void stopMethod(View v){
+        Intent i = new Intent(this, SensorDBService.class);
+        stopService(i);
+    }*/
 
 	@Override
 	public void onDestroy() {

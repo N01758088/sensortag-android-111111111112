@@ -14,7 +14,7 @@
   this software subject to the terms herein.  With respect to the foregoing patent
   license, such license is granted  solely to the extent that any such patent is necessary
   to Utilize the software alone.  The patent license shall not apply to any combinations which
-  include this software, other than combinations with devices manufactured by or for TI (ÒTI DevicesÓ). 
+  include this software, other than combinations with devices manufactured by or for TI (ï¿½TI Devicesï¿½). 
   No hardware patent is licensed hereunder.
 
   Redistributions must preserve existing copyright notices and reproduce this license (including the
@@ -42,9 +42,9 @@
 
   DISCLAIMER.
 
-  THIS SOFTWARE IS PROVIDED BY TI AND TIÕS LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+  THIS SOFTWARE IS PROVIDED BY TI AND TIï¿½S LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
   BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-  IN NO EVENT SHALL TI AND TIÕS LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  IN NO EVENT SHALL TI AND TIï¿½S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
   OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
@@ -54,11 +54,7 @@
  **************************************************************************************************/
 package com.example.ti.ble.sensortag;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -70,10 +66,10 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
+import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-// import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -84,14 +80,29 @@ import android.widget.Toast;
 import com.example.ti.ble.common.BluetoothLeService;
 import com.example.ti.ble.common.GattInfo;
 import com.example.ti.ble.common.HelpView;
-import com.example.ti.ble.sensortag.R;
+import com.example.ti.ble.sensortag.data.SensortagDbHelper;
 import com.example.ti.util.Point3D;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+// import android.util.Log;
 
 public class DeviceActivity extends ViewPagerActivity {
 	// Log
 	// private static String TAG = "DeviceActivity";
 
 	// Activity
+
+    private final String LOG_TAG = DeviceActivity.class.getSimpleName();
+
+    SensortagDbHelper myDb = new SensortagDbHelper(this);
+
+
+
+
 	public static final String EXTRA_DEVICE = "EXTRA_DEVICE";
 	private static final int PREF_ACT_REQ = 0;
 	private static final int FWUPDATE_ACT_REQ = 1;
@@ -121,6 +132,24 @@ public class DeviceActivity extends ViewPagerActivity {
 		mResourceIdPager = R.id.pager;
 		mFwRev = new String("1.5"); // Assuming all SensorTags are up to date until actual FW revision is read
 	}
+
+
+
+    String insval = "Inserted";
+    String failval = "Failed to Insert";
+
+ /*   public void addData() {
+
+
+        boolean isInserted = myDb.insertData(mDeviceView.devid, mDeviceView.temp, mDeviceView.hum, mDeviceView.bar, mDeviceView.tstmp);
+        if (isInserted) {
+            System.out.println("Status of DB insert: " + insval);
+            Log.e(LOG_TAG, insval);
+        } else {
+            System.out.println("Status of DB insert: " + failval);
+            Log.e(LOG_TAG, failval);
+        }
+    }*/
 
 	public static DeviceActivity getInstance() {
 		return (DeviceActivity) mThis;
@@ -160,7 +189,42 @@ public class DeviceActivity extends ViewPagerActivity {
 
 		// Initialize sensor list
 		updateSensorList();
+
+        //addData();
+        viewAll();
 	}
+
+
+
+  public void viewAll(){
+        Cursor res = myDb.getAllData();
+        if (res.getCount() ==0){
+            // show message
+            showMessage("Error", "No Data Found");
+            return;
+        }
+        StringBuffer buffer = new StringBuffer();
+        while (res.moveToNext()){
+            buffer.append("ID:"+ res.getString(0) +"\n");
+            buffer.append("DEVID:"+ res.getString(1) +"\n");
+            buffer.append("TEMP:"+ res.getString(2) +"\n");
+            buffer.append("HUM:"+ res.getString(3) +"\n");
+            buffer.append("BAR:"+ res.getString(4) +"\n");
+            buffer.append("TIME:"+ res.getString(5) +"\n");
+
+        }
+        //show all data
+        showMessage("Data", buffer.toString());
+    }
+
+    public void showMessage(String title, String message){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.show();
+
+    }
 
 	@Override
 	public void onDestroy() {
