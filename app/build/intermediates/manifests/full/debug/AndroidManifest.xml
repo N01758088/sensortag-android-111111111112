@@ -63,11 +63,16 @@
             android:name="com.example.ti.ble.sensortag.data.SensorProvider"
             android:authorities="com.example.ti.ble.sensortag" />
 
-        <service
-            android:name="com.example.ti.ble.sensortag.SensorDBService"
-            android:exported="false" />
+        <!-- Register BroadCase Receiver -->
+        <receiver
+            android:name="com.example.ti.ble.sensortag.SensorBC"
+            android:process=":remote" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
 
-        <receiver android:name="com.example.ti.ble.sensortag.service.SensorService$AlarmReceiver" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

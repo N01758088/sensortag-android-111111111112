@@ -56,6 +56,7 @@ package com.example.ti.ble.sensortag;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -90,6 +91,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -138,8 +140,11 @@ public class MainActivity extends ViewPagerActivity {
 	private boolean mInitialised = false;
 	SharedPreferences prefs = null;
 
-    //SQL DB
-    //SensortagDbHelper myDb;
+    // DB Class to perform DB related operations
+    SensortagDbHelper controller = new SensortagDbHelper(this);
+    // Progress Dialog Object
+    ProgressDialog prgDialog;
+    HashMap<String, String> queryValues;
 
     //sensor values to be inserted from deviceview file
 
@@ -148,12 +153,6 @@ public class MainActivity extends ViewPagerActivity {
     String hum = "";
     String bar = "";
    String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-
- /* String devid = DeviceView.mAccValue.getText().toString();
-    String temp = DeviceView.mAmbValue.getText().toString();
-    String hum = DeviceView.mHumValue.getText().toString();
-    String bar = DeviceView.mBarValue.getText().toString();
-    String tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()); */
 
 
 	public MainActivity() {
@@ -167,16 +166,8 @@ public class MainActivity extends ViewPagerActivity {
 		// Start the application
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		super.onCreate(savedInstanceState);
-        //new FetchSensorTask().execute();
-       // myDb = new SensortagDbHelper(this);
-        /*devid = DeviceView.mAccValue.toString();
-        temp = DeviceView.mAmbValue.toString();
-        hum = DeviceView.mHumValue.toString();
-        bar = DeviceView.mBarValue.toString();
-        tstmp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());*/
-      //  addData();
+        //  addData();
      //   viewAll();
-
 
     		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -217,73 +208,26 @@ public class MainActivity extends ViewPagerActivity {
 		mFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
 		mFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
 		mFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-	}
 
-  //  String insval = "Inserted";
-   // String failval = "Failed to Insert";
+/*        // Get User records from SQLite DB
+        ArrayList<HashMap<String, String>> valuesList = controller.getAllValues();
 
-  /*  public void addData(){
-
-        boolean isInserted =  myDb.insertData(devid, temp, hum, bar, tstmp);
-        if (isInserted) {
-            System.out.println("Status of DB insert: " + insval);
-            Log.e(LOG_TAG, insval);
-        } else {
-            System.out.println("Status of DB insert: " + failval);
-            Log.e(LOG_TAG, failval);
-        /*
-       boolean isInserted =  myDb.insertData(devid, temp, hum, bar, tstmp);
-        if (isInserted) {
-            System.out.println("Status of DB insert: " + insval);
-            Log.e(LOG_TAG, insval);
-        } else {
-            System.out.println("Status of DB insert: " + failval);
-            Log.e(LOG_TAG, failval);*/
-     //   }
-
-  //  }
-
- /*   public void viewAll(){
-        Cursor res = myDb.getAllData();
-        if (res.getCount() ==0){
-            // show message
-            showMessage("Error", "No Data Found");
-            return;
-        }
-        StringBuffer buffer = new StringBuffer();
-        while (res.moveToNext()){
-            buffer.append("ID:"+ res.getString(0) +"\n");
-            buffer.append("DEVID:"+ res.getString(1) +"\n");
-            buffer.append("TEMP:"+ res.getString(2) +"\n");
-            buffer.append("HUM:"+ res.getString(3) +"\n");
-            buffer.append("BAR:"+ res.getString(4) +"\n");
-            buffer.append("TIME:"+ res.getString(5) +"\n");
-
-        }
-        //show all data
-        showMessage("Data", buffer.toString());
+        // Initialize Progress Dialog properties
+        prgDialog = new ProgressDialog(this);
+        prgDialog.setMessage("Transferring Data from Remote MySQL DB and Syncing SQLite. Please wait...");
+        prgDialog.setCancelable(false);
+        // BroadCase Receiver Intent Object
+        Intent alarmIntent = new Intent(getApplicationContext(), SensorBC.class);
+        // Pending Intent Object
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        // Alarm Manager Object
+        AlarmManager alarmManager = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        // Alarm Manager calls BroadCast for every Ten seconds (10 * 1000), BroadCase further calls service to check if new records are inserted in
+        // Remote MySQL DB
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis() + 5000, 10 * 1000, pendingIntent);*/
     }
 
-    public void showMessage(String title, String message){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(true);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.show();
-
-    }*/
-
-  /*  public void startMethod(View v){
-        Intent i = new Intent(this, SensorDBService.class);
-        startService(i);
-
-    }
-    public void stopMethod(View v){
-        Intent i = new Intent(this, SensorDBService.class);
-        stopService(i);
-    }*/
-
-	@Override
+ 	@Override
 	public void onDestroy() {
 		// Log.e(TAG,"onDestroy");
 		super.onDestroy();
@@ -338,8 +282,124 @@ public class MainActivity extends ViewPagerActivity {
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+       // syncSQLiteMySQLDB();
 		return true;
 	}
+
+   /* // Method to Sync MySQL to SQLite DB
+    public void syncSQLiteMySQLDB() {
+        // Create AsycHttpClient object
+        AsyncHttpClient client = new AsyncHttpClient();
+        // Http Request Params Object
+        RequestParams params = new RequestParams();
+        // Show ProgressBar
+        prgDialog.show();
+        // Make Http call to getusers.php
+        client.post("http://localhost:80/mysqlsqlitesync/getvalues.php", params, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(String response) {
+                // Hide ProgressBar
+                prgDialog.hide();
+                // Update SQLite DB with response sent by getusers.php
+                updateSQLite(response);
+            }
+            // When error occurred
+            @Override
+            public void onFailure(int statusCode, Throwable error, String content) {
+                // TODO Auto-generated method stub
+                // Hide ProgressBar
+                prgDialog.hide();
+                if (statusCode == 404) {
+                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                } else if (statusCode == 500) {
+                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet]",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    public void updateSQLite(String response){
+        ArrayList<HashMap<String, String>> valuesynclist;
+        valuesynclist = new ArrayList<HashMap<String, String>>();
+        // Create GSON object
+        Gson gson = new GsonBuilder().create();
+        try {
+            // Extract JSON array from the response
+            JSONArray arr = new JSONArray(response);
+            System.out.println(arr.length());
+            // If no of array elements is not zero
+            if(arr.length() != 0){
+                // Loop through each array element, get JSON object which has userid and username
+                for (int i = 0; i < arr.length(); i++) {
+                    // Get JSON object
+                    JSONObject obj = (JSONObject) arr.get(i);
+                    System.out.println(obj.get("ROWID"));
+                    System.out.println(obj.get("DEVICEID"));
+                    System.out.println(obj.get("TEMPERATURE"));
+                    System.out.println(obj.get("HUMIDITY"));
+                    System.out.println(obj.get("BAROMETER"));
+                    System.out.println(obj.get("TIMESTAMP"));
+                    // DB QueryValues Object to insert into SQLite
+                    queryValues = new HashMap<String, String>();
+                    // Add ROWID extracted from Object
+                    queryValues.put("ROWID", obj.get("ROWID").toString());
+                    // Add DEVICEID extracted from Object
+                    queryValues.put("DEVICEID", obj.get("DEVICEID").toString());
+                    // Add TEMPERATURE extracted from Object
+                    queryValues.put("TEMPERATURE", obj.get("TEMPERATURE").toString());
+                    // Add HUMIDITY extracted from Object
+                    queryValues.put("HUMIDITY", obj.get("HUMIDITY").toString());
+                    // Add BAROMETER extracted from Object
+                    queryValues.put("BAROMETER", obj.get("BAROMETER").toString());
+                    // Add TIMESTAMP extracted from Object
+                    queryValues.put("TIMESTAMP", obj.get("TIMESTAMP").toString());
+                    // Insert Values into SQLite DB
+                    controller.insertValues(queryValues);
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    // Add status for each User in Hashmap
+                    map.put("RowId", obj.get("row_id").toString());
+                    map.put("DeviceId", obj.get("device_id").toString());
+                    map.put("Temperature", obj.get("temperature").toString());
+                    map.put("Humidity", obj.get("humidity").toString());
+                    map.put("Barometer", obj.get("barometer").toString());
+                    map.put("Timestamp", obj.get("timestamp").toString());
+                    map.put("status", "1");
+                    valuesynclist.add(map);
+                }
+                // Inform Remote MySQL DB about the completion of Sync activity by passing Sync status of Users
+                updateMySQLSyncSts(gson.toJson(valuesynclist));
+                // Reload the Main Activity
+                reloadActivity();
+            }
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+
+    // Method to inform remote MySQL DB about completion of Sync activity
+    public void updateMySQLSyncSts(String json) {
+        System.out.println(json);
+        AsyncHttpClient client = new AsyncHttpClient();
+        RequestParams params = new RequestParams();
+        params.put("syncsts", json);
+        // Make Http call to updatesyncsts.php with JSON parameter which has Sync statuses of Users
+        client.post("http://localhost:80/mysqlsqlitesync/updatesyncsts.php", params, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(String response) {
+                Toast.makeText(getApplicationContext(),    "MySQL DB has been informed about Sync activity", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(int statusCode, Throwable error, String content) {
+                Toast.makeText(getApplicationContext(), "Error Occurred", Toast.LENGTH_LONG).show();
+            }
+        });
+    }*/
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     
     <uses-sdk
         android:minSdkVersion="18"
@@ -62,13 +63,16 @@
             android:authorities="com.example.ti.ble.sensortag"
             android:name=".data.SensorProvider" />
 
-        <service
-            android:name="com.example.ti.ble.sensortag.SensorDBService"
-            android:exported="false"/>
-
+        <!--  Register BroadCase Receiver -->
         <receiver
-            android:name=".service.SensorService$AlarmReceiver"/>
-        
+            android:name=".SensorBC"
+            android:process=":remote" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 
